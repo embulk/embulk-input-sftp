@@ -7,22 +7,30 @@ import org.embulk.config.TaskSource;
 import org.embulk.spi.Exec;
 import org.embulk.spi.FileInputPlugin;
 import org.embulk.spi.TransactionalFileInput;
+import org.embulk.util.config.ConfigMapper;
+import org.embulk.util.config.ConfigMapperFactory;
+import org.embulk.util.config.TaskMapper;
 
 import java.util.List;
 
 public class SftpFileInputPlugin
         implements FileInputPlugin
 {
+    public SftpFileInputPlugin() {
+        this.configMapperFactory = ConfigMapperFactory.builder().addDefaultModules().addModule(new LocalFileModule()).build();
+    }
+
     @Override
     public ConfigDiff transaction(ConfigSource config, FileInputPlugin.Control control)
     {
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final ConfigMapper configMapper = this.configMapperFactory.createConfigMapper();
+        final PluginTask task = configMapper.map(config, PluginTask.class);
         SftpFileInput.validateHost(task);
 
         // list files recursively
         task.setFiles(SftpFileInput.listFilesByPrefix(task));
         // number of processors is same with number of files
-        return resume(task.dump(), task.getFiles().getTaskCount(), control);
+        return resume(task.toTaskSource(), task.getFiles().getTaskCount(), control);
     }
 
     @Override
@@ -30,7 +38,8 @@ public class SftpFileInputPlugin
                              int taskCount,
                              FileInputPlugin.Control control)
     {
-        PluginTask task = taskSource.loadTask(PluginTask.class);
+        final TaskMapper taskMapper = this.configMapperFactory.createTaskMapper();
+        final PluginTask task = taskMapper.map(taskSource, PluginTask.class);
         String lastPath = null;
         if (task.getIncremental()) {
             lastPath = SftpFileInput.getRelativePath(task, task.getFiles().getLastPath(task.getLastPath()));
@@ -55,7 +64,10 @@ public class SftpFileInputPlugin
     @Override
     public TransactionalFileInput open(TaskSource taskSource, int taskIndex)
     {
-        PluginTask task = taskSource.loadTask(PluginTask.class);
+        final TaskMapper taskMapper = this.configMapperFactory.createTaskMapper();
+        final PluginTask task = taskMapper.map(taskSource, PluginTask.class);
         return new SftpFileInput(task, taskIndex);
     }
+
+    private final ConfigMapperFactory configMapperFactory;
 }

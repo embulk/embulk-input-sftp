@@ -4,7 +4,7 @@ plugins {
     id "java"
     id "checkstyle"
     id "jacoco"
-    id "org.embulk.embulk-plugins" version "0.3.0"
+    id "org.embulk.embulk-plugins" version "0.4.2"
 }
 
 repositories {
@@ -13,7 +13,7 @@ repositories {
 }
 
 group = "org.embulk.input.sftp"
-version = "0.3.3"
+version = "0.4.0"
 description = "Reads files stored on remote server using SFTP."
 
 sourceCompatibility = 1.8
@@ -24,16 +24,22 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-    compileOnly "org.embulk:embulk-core:0.9.23"
+    compileOnly "org.embulk:embulk-api:0.10.3"
+    compileOnly "org.embulk:embulk-core:0.10.3"
+
     compile "org.apache.commons:commons-vfs2:2.2"
     compile "commons-io:commons-io:2.6"
     compile "com.jcraft:jsch:0.1.55"
+    compile "org.embulk:embulk-util-config:0.1.1"
 
     testCompile "junit:junit:4.13"
-    testCompile "org.embulk:embulk-core:0.9.23:tests"
-    testCompile "org.embulk:embulk-standards:0.9.23"
-    testCompile "org.embulk:embulk-deps-buffer:0.9.23"
-    testCompile "org.embulk:embulk-deps-config:0.9.23"
+    testCompile "org.embulk:embulk-api:0.10.3"
+    testCompile "org.embulk:embulk-core:0.10.3"
+    testCompile "org.embulk:embulk-core:0.10.3:tests"
+    testCompile "org.embulk:embulk-standards:0.10.3"
+    testCompile "org.embulk:embulk-deps-buffer:0.10.3"
+    testCompile "org.embulk:embulk-deps-config:0.10.3"
+    testCompile "org.embulk:embulk-deps-timestamp:0.10.3"
     testCompile "org.apache.sshd:apache-sshd:1.1.0"
     testCompile "org.littleshoot:littleproxy:1.1.0-beta1"
     testCompile "io.netty:netty-all:4.0.34.Final"
@@ -43,6 +49,19 @@ embulkPlugin {
     mainClass = "org.embulk.input.sftp.SftpFileInputPlugin"
     category = "input"
     type = "sftp"
+    ignoreConflicts = [
+        // They conflict with dependencies of embulk-core as of now, but they are intentionally included.
+        // They are marked to "[IGNORE IT]", then.
+        //
+        // Those dependencies of embulk-core will be hidden from plugins behind a sub ClassLoader.
+        // By including them in the plugin, it would work both before and after the hiding.
+        // The conflict would not cause problems IF THE VERSIONS ARE 100% SAME with embulk-core.
+        [ group: "com.fasterxml.jackson.core", module: "jackson-annotations" ],
+        [ group: "com.fasterxml.jackson.core", module: "jackson-core" ],
+        [ group: "com.fasterxml.jackson.core", module: "jackson-databind" ],
+        [ group: "com.fasterxml.jackson.datatype", module: "jackson-datatype-jdk8" ],
+        [ group: "javax.validation", module: "validation-api" ],
+    ]
 }
 
 javadoc {
