@@ -13,6 +13,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.embulk.spi.unit.LocalFile;
 
+/**
+ * Jackson Module to serialize/deserialize {@code embulk-core}'s {@code LocalFile}.
+ *
+ * <p>This is almost a copy from {@code embulk-core}'s {@code org.embulk.spi.util.LocalFile}.
+ * It will be imported into {@code embulk-util-config} once {@code LocalFile} is imported into
+ * {@code embulk-api}. This copy will be removed, and replaced with {@code embulk-util-config}'s
+ * once imported.
+ */
 final class LocalFileModule extends SimpleModule {
     LocalFileModule() {
         super(LocalFileModule.class.getCanonicalName(), Version.unknownVersion());
